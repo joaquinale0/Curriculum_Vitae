@@ -8,48 +8,67 @@ import supermerk.*;
 public class TestMain {
 
 	public static void main(String[] args) {
-		ListaClientes listaclientes = new ListaClientes();
+		//ListaClientes listaclientes = new ListaClientes();
+		Cliente usuario = null;
+		
+		/// ---- datos cliente para registrarse
+		String nombreUsuario;
+		String password;
+		int id=0;
+		String nombre;
+		String apellido;
+		int dni;
+		
 		listaProducto Listaproducto = new listaProducto();
 		
-		Cliente usuario = null;
+		//Cliente usuario = null;
 		
 		Scanner teclado = new Scanner(System.in);
 		
 		int opcion;
 		do {
-			opcion=inicioSeccion();
+			opcion=inicioSesion();
 			switch (opcion) {
 			case 1: {
-				listaclientes.agregarUno();
+				id++;
+				System.out.println("Ingrese los siguientes datos");
+				System.out.println("Nombre de Usuario: ");
+				nombreUsuario=teclado.nextLine();
+				System.out.println("Password: ");
+				password=teclado.nextLine();
+				System.out.println("Nombre: ");
+				nombre=teclado.nextLine();
+				System.out.println("Apellido: ");
+				apellido=teclado.nextLine();
+				System.out.println("DNI: ");
+				dni=teclado.nextInt();
+				
+				teclado.nextLine(); //LIMPIAMOS EL BUFFERA (para evitar que el enter quede como caracter y poder igresar el siguiente String)
+				
+				// llamamos al constructor
+				usuario = new Cliente (nombreUsuario,password,id,nombre,apellido,dni);
+				
+				usuario.mostrarUsuario();
 				break;
 			}
-			case 2:{
-				if(listaclientes.iniciarSeccion()) {
-					do {
-						opcion=menuCliente();
-						switch (opcion) {
-						case 1: {  // 1)Seleccionar Productos
-							Listaproducto.retornaProducto(); // DEBO REPARAR LA SELECCION DE PRODUCTO
-							
-							break;
-						}
-						
-						case 2: {  // 2)Ver lista de productos
-							break;
-						}
-						
-						case 3: { //3)Autorizar compra
-							break;
-						}
-						
-						} // final switch menu clientes
-						
-					}while(opcion!=0);
-					
-					opcion=2;
-				} // final del if (sobre inicio de seccion);
+			case 2:{				
+				usuario.mostrarUsuario();
+				
+				System.out.println("Ingrese los siguientes datos");
+				System.out.println("Nombre de Usuario: ");
+				nombreUsuario=teclado.nextLine();
+				System.out.println("Password: ");
+				password=teclado.nextLine();
+				if(usuario.confirmacionIniciarSesion(nombreUsuario, password)) {
+					if(usuario.retorna_privilegio()){ // MENU DEL ADMINISTRADOR
+						System.out.println("ERES ADMIN");
+					}
+					else { // MENU DEL CLIENTE
+						System.out.println("ERES CLIENTE");
+					}
+				}
 				else {
-					System.out.println("Contraseña o usuario incorrectos");
+					System.out.println("Su Nombre de Usuario o contraseña es incorrecto");
 				}
 				break;
 			}
@@ -59,13 +78,13 @@ public class TestMain {
 		
 	}
 
-	public static int inicioSeccion() {
+	public static int inicioSesion() {
 		int x;
 		Scanner teclado = new Scanner(System.in);
 		do {
 			System.out.println("Ingrese una opcion:");
 			System.out.println("1)Registrarse");
-			System.out.println("2)Iniciar Seccion");
+			System.out.println("2)Iniciar Sesion");
 			System.out.println("0)Salir");
 			x=teclado.nextInt();
 		}while(x<0 || x>2);

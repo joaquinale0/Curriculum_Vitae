@@ -1,28 +1,23 @@
 package supermerk;
 
-public class Usuario {
+public abstract class Usuario {
 	private int id;
 	private String email;
 	private String password;
 	private boolean permisos;
 	// CONSTRUCTOR
-	public Usuario(int id,String email,String password) {
+	public Usuario(int id,String email,String password, boolean permisos) {
 		this.id=id;
 		this.email=email;
 		this.password=password;
-		this.permisos=false;
+		this.permisos=permisos;
 	}
 	
+	// RETORNA PRIVILEGIO
+	public abstract boolean retorna_privilegio();
 	
-	// INICIAR SECCION
-	public boolean confirmacionIniciarSeccion(String email, String password) {
-		if(email==getEmail() && password==getPassword()) {
-			return true;
-		}
-		else {
-			return false;
-		}
-	}
+	// INICIAR SESION
+	public abstract boolean confirmacionIniciarSesion(String email, String password);
 	
 	// GETTER AND SETTER
 	public int getId() {
@@ -32,16 +27,19 @@ public class Usuario {
 		this.id = id;
 	}
 	public String getEmail() {
-		return email;
+		return this.email;
 	}
 	public void setEmail(String email) {
 		this.email = email;
 	}
 	public String getPassword() {
-		return password;
+		return this.password;
 	}
 	public void setPassword(String password) {
 		this.password = password;
+	}
+	public boolean getPermisos() {
+		return this.permisos;
 	}
 	
 	// permitir modificar

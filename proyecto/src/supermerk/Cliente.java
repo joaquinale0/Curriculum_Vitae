@@ -17,7 +17,7 @@ public class Cliente extends Usuario{
 	// CONSTRUCTOR 1
 	public Cliente(String email,String password, int id,String nombre,String apellido,int dni,String domicilio,
 			int telefono,String pais,String provincia,int codigoPostal) {
-		super(id,email,password);
+		super(id,email,password, false);
 		this.id=id;
 		this.nombre=nombre;
 		this.apellido=apellido;
@@ -34,7 +34,7 @@ public class Cliente extends Usuario{
 	// CONSTRUCTOR 2
 	public Cliente(String email,String password,int id,String nombre,String apellido,int dni,String domicilio,
 			int telefono) {
-		super(id, email, password);
+		super(id, email, password, false);
 		this.id=id;
 		this.nombre=nombre;
 		this.apellido=apellido;
@@ -48,8 +48,8 @@ public class Cliente extends Usuario{
 	}
 	
 	// CONSTRUCTOR 3
-		public Cliente(String email,String password,int id,String nombre,String apellido,int dni) {
-			super(id, email, password);
+		public Cliente(String nombreUsuario,String password,int id,String nombre,String apellido,int dni) {
+			super(id, nombreUsuario, password, false);
 			this.id=id;
 			this.nombre=nombre;
 			this.apellido=apellido;
@@ -62,6 +62,28 @@ public class Cliente extends Usuario{
 			this.listaProducto=null;
 		}
 	
+		
+		
+	// MOSTRAR USUARIO
+		public void mostrarUsuario() {
+			System.out.println("Nombre de Usuario: " + super.getEmail());
+			System.out.println("Contraseña: " + super.getPassword());
+		}
+	// RETORNA PRIVILEGIO
+		@Override
+		public boolean retorna_privilegio() {
+			return super.getPermisos();
+		}
+		
+	// INICIAR SESION
+		public boolean confirmacionIniciarSesion(String email, String password) {
+			if( email.equals(super.getEmail()) && password.equals(super.getPassword())) {
+				return true;
+			}
+			else {
+				return false;
+			}
+		}
 		
 	// 	Agregar un producto a la lista
 		public void agregarProductoLista(Producto articulo) {
@@ -81,7 +103,7 @@ public class Cliente extends Usuario{
 			}
 		}
 		
-	// ELIMINAR UN PRODUCTO DE LA LISTA("COLA")
+	// ELIMINAR UN PRODUCTO DE LA LISTA
 		public void eliminar_producto(Producto eliminar) {
 			Queue<Producto> copia = new LinkedList<>();
 			copia.addAll(this.listaProducto);
@@ -157,4 +179,6 @@ public class Cliente extends Usuario{
 	public void setCodigoPostal(int codigoPostal) {
 		this.codigoPostal = codigoPostal;
 	}
+
+
 }

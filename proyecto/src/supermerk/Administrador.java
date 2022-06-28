@@ -8,7 +8,7 @@ public class Administrador extends Usuario{
 	
 	
 	public Administrador(String email,String password,int id,String nombre,String apellido) {
-		super(id, email, password);
+		super(id, email, password, true);
 		this.id=id;
 		this.nombre=nombre;
 		this.apellido=apellido;
@@ -16,8 +16,21 @@ public class Administrador extends Usuario{
 	}
 
 
+	// RETORNA PRIVILEGIO
+	@Override
+	public boolean retorna_privilegio() {
+		return getPermisos();
+	}
 	
-	
+	// INICIAR SESION
+			public boolean confirmacionIniciarSesion(String email, String password) {
+				if(email==super.getEmail() && password==super.getPassword()) {
+					return true;
+				}
+				else {
+					return false;
+				}
+			}
 	
 	// GETTER SETTER
 	public int getId() {

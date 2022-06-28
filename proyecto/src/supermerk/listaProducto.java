@@ -1,10 +1,11 @@
 package supermerk;
 
+import java.util.ArrayList;
 import java.util.Queue;
 import java.util.Scanner;
 
 public class listaProducto {
-	private Queue<Producto> listaProducto=null;
+	private ArrayList<Producto> listaProducto=null;
 	private int id;
 	public listaProducto() {
 		this.id=0;
