@@ -11,7 +11,7 @@ public class TestMain {
 		//Registrar la JDBC Driver
 		//JDBC nombre del driver y URL de la BDD
 		static final String JDBC_DRIVER ="com.mysql.cj.jdbc.Driver";
-		static final String DB_URL="jdbc:mysql://localhost:3306/supermarkbasedatos";
+		static final String DB_URL="jdbc:mysql://localhost:3306/supermarkBaseDatos";
 		// Credenciales de la BDD
 		static final String USER = "root";
 		static final String PASS= "jag40515989";
@@ -36,7 +36,6 @@ public class TestMain {
 		String provincia;
 		int codigoPostal;
 		
-			
 		Scanner teclado = new Scanner(System.in);
 		
 		int opcion;
@@ -47,6 +46,7 @@ public class TestMain {
 		// creamos variable String sql para escribir en codigo sql
 		//dentro de java el objeto 'ResultSet = SELECT'
 		String sql;
+		ResultSet rs = null;
 		
 		//registrar el driver
 		Connection conn=null;
@@ -94,17 +94,27 @@ public class TestMain {
 					provincia=usuario.getProvincia();
 					codigoPostal=usuario.getCodigoPostal();
 					
+					
+					
+					
 					//dentro de java el objeto 'ResultSet = insert'
+					
+					//CARGANDO EL  USUARIO
+					sql = "insert into Usuario (nombreUsuario, password, permisos)values"+
+					"('" + nombreUsuario + "','" + password + "',"+ 0 + ");";
+					rs = stmt.executeQuery(sql);
+					
 					sql = "insert into Cliente (nombre, apellido, dni, domicilio, "+
 					"telefono, pais, provincia, codigoPostal)values"+
 					"('" + nombre + "','" + apellido  + "'," + dni  + ",'" + domicilio  + "'," + telefono +
 					",'" + pais  + "','" + provincia  + "'," + codigoPostal + ")";
-					ResultSet rs = stmt.executeQuery(sql);
+					rs = stmt.executeQuery(sql);
+					
 					
 					/* FALTA AGREGAR LOS DATOS DE LA TABLA Usuario*/
 					
 					
-					rs.close(); // cerramos las consulta SQL
+					//rs.close(); // cerramos las consulta SQL
 					break;
 				}
 				case 2:{ 	// INICIAR SESION
@@ -117,29 +127,34 @@ public class TestMain {
 					
 					// Consulta SQL
 					sql = "SELECT nombreUsuario, password, permisos from Usuario";
-					ResultSet rs = stmt.executeQuery(sql);
+					rs = stmt.executeQuery(sql);
 					
 					//PASO 5: Extraer datos ResultSet
-					while(rs.next()) {
-						// Recibir por tipo de columna
-						String nombreUser = rs.getString("nombreUsuario");
-						String contrasena = rs.getString("password");
-						boolean permisos = rs.getBoolean("permisos");
-						
-						if(nombreUser.equals(nombreUsuario) && contrasena.equals(password)) {
-							if(permisos){ // MENU DEL ADMINISTRADOR
-								System.out.println("ERES ADMIN");
+					if(rs.isBeforeFirst()) {
+						while(rs.next()) {
+							// Recibir por tipo de columna
+							String nombreUser = rs.getString("nombreUsuario");
+							String contrasena = rs.getString("password");
+							int permisos = rs.getInt("permisos");
+							
+							if(nombreUser.equals(nombreUsuario) && contrasena.equals(password)) {
+								if(permisos==0){ // MENU DEL CLIENTE
+									System.out.println("ERES CLIENTE");
+								}
+								else { // MENU DEL ADMINISTRADOR
+									System.out.println("ERES ADMIN");
+								}
 							}
-							else { // MENU DEL CLIENTE
-								System.out.println("ERES CLIENTE");
+							else {
+								System.out.println("Su Nombre de Usuario o contraseña es incorrecto");
 							}
+							
 						}
-						else {
-							System.out.println("Su Nombre de Usuario o contraseña es incorrecto");
-						}
-						
 					}
-					rs.close();
+					else {
+						System.out.println("No Hay Usuarios Creados");
+					}
+				
 					break;
 				}
 				
@@ -148,7 +163,7 @@ public class TestMain {
 			} while (opcion!=0);
 			
 			//PASO 6: Entorno de limpieza
-			
+			rs.close();
 			stmt.close();
 			conn.close();
 		}

@@ -29,6 +29,12 @@ CREATE TABLE IF NOT EXISTS `supermarkBaseDatos`.`Usuairo` (
   UNIQUE INDEX `nombreUsuario_UNIQUE` (`nombreUsuario` ASC) INVISIBLE)
 ENGINE = InnoDB;
 
+alter table Usuairo rename Usuario; /* ya le cambie el nombre a Usuario;*/
+
+select * from Usuario;
+insert into Usuario (nombreUsuario, password, permisos)values('joa','123',0);
+insert into Cliente (nombre, apellido, dni)values('joauin','granado',12333);
+
 
 -- -----------------------------------------------------
 -- Table `supermarkBaseDatos`.`Cliente`

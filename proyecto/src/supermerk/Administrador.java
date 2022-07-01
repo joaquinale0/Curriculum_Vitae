@@ -1,11 +1,10 @@
 package supermerk;
-import java.sql.*;
+
 
 public class Administrador extends Usuario{
 	private int id;
 	private String nombre;
 	private String apellido;
-	
 	
 	public Administrador(String email,String password,int id,String nombre,String apellido) {
 		super(id, email, password, true);
