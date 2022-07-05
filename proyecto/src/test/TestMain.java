@@ -1,4 +1,5 @@
 package test;
+import java.lang.System.Logger;
 import java.sql.*;
 import java.util.LinkedList;
 import java.util.Queue;
@@ -11,10 +12,17 @@ public class TestMain {
 		//Registrar la JDBC Driver
 		//JDBC nombre del driver y URL de la BDD
 		static final String JDBC_DRIVER ="com.mysql.cj.jdbc.Driver";
-		static final String DB_URL="jdbc:mysql://localhost:3306/supermarkBaseDatos";
+		//static final String DB_URL="jdbc:mysql://localhost:3306/supermarkBaseDatos";
+		static final String DB_URL="jdbc:mysql://localhost:3306/supermercadoUno";
+		
 		// Credenciales de la BDD
 		static final String USER = "root";
 		static final String PASS= "jag40515989";
+		
+		
+		//variables globales
+		static int id_cliente;
+		static int id_usuario;
 
 	public static void main(String[] args) {
 		
@@ -38,8 +46,8 @@ public class TestMain {
 		
 		Scanner teclado = new Scanner(System.in);
 		
-		int opcion;
-		
+		int opcion, opcionCliente;
+		int seleccion;
 		
 		
 		/*  CONEXIONES Y REGISTROS MYSQL */
@@ -49,8 +57,9 @@ public class TestMain {
 		ResultSet rs = null;
 		
 		//registrar el driver
-		Connection conn=null;
+		Connection conn = null;
 		Statement stmt = null;
+		PreparedStatement ps = null;
 		
 		try {
 			//PASO2: Regristramos JDBC Driver
@@ -64,6 +73,7 @@ public class TestMain {
 			System.out.println("Creando Statement...");
 			stmt = conn.createStatement();
 			
+						
 					/* MENU DE LA APLICACION*/
 			do {
 				opcion=inicioSesion();
@@ -83,38 +93,53 @@ public class TestMain {
 					dni=teclado.nextInt();
 					
 					teclado.nextLine(); //LIMPIAMOS EL BUFFER (para evitar que el enter quede como caracter y poder igresar el siguiente String)
-					
-					// llamamos al constructor
-					usuario = new Cliente (nombreUsuario,password,id,nombre,apellido,dni);
-					
-					// retornamos los datos del objeto Cliente
-					domicilio=usuario.getDomicilio();
-					telefono=usuario.getTelefono();
-					pais=usuario.getPais();
-					provincia=usuario.getProvincia();
-					codigoPostal=usuario.getCodigoPostal();
-					
-					
-					
-					
+									
 					//dentro de java el objeto 'ResultSet = insert'
-					
 					//CARGANDO EL  USUARIO
-					sql = "insert into Usuario (nombreUsuario, password, permisos)values"+
-					"('" + nombreUsuario + "','" + password + "',"+ 0 + ");";
+					sql = "insert into Usuario (nombreUsuario, password, permisos)values(?,?,?)";
+					
+					/*"('" + nombreUsuario + "','" + password + "',"+ 0 + ")";
+					rs = stmt.executeQuery(sql);*/
+					
+					ps = conn.prepareStatement(sql); 
+					ps.setString(1, nombreUsuario);
+					ps.setString(2, password);
+					ps.setInt(3, 0);
+					ps.execute();
+					
+					// BUSCAR ID USUARIO
+					sql = "SELECT * from Usuario";
 					rs = stmt.executeQuery(sql);
 					
-					sql = "insert into Cliente (nombre, apellido, dni, domicilio, "+
-					"telefono, pais, provincia, codigoPostal)values"+
-					"('" + nombre + "','" + apellido  + "'," + dni  + ",'" + domicilio  + "'," + telefono +
-					",'" + pais  + "','" + provincia  + "'," + codigoPostal + ")";
-					rs = stmt.executeQuery(sql);
+					//PASO 5: Extraer datos ResultSet
+					if(rs.isBeforeFirst()) {
+						while(rs.next()) {
+							// Recibir por tipo de columna
+							String nombreUser = rs.getString("nombreUsuario");
+							if(nombreUsuario.equals(nombreUser)) {
+								id_usuario = rs.getInt("idUsuairo");
+							}
+						}
+					}
+					else
+						id_usuario = 1;
+					
+					
+					//cargamos cliente
+					sql = "insert into Cliente (nombre, apellido, dni, cliente_es_usuario)values(?,?,?,?)";
+					ps = conn.prepareStatement(sql); 
+					ps.setString(1, nombre);
+					ps.setString(2, apellido);
+					ps.setInt(3, dni);
+					ps.setInt(4, id_usuario);
+					ps.execute();
+							
+					/*"('" + nombre + "','" + apellido  + "'," + dni + ")";
+					rs = stmt.executeQuery(sql); */
 					
 					
 					/* FALTA AGREGAR LOS DATOS DE LA TABLA Usuario*/
 					
-					
-					//rs.close(); // cerramos las consulta SQL
 					break;
 				}
 				case 2:{ 	// INICIAR SESION
@@ -139,7 +164,63 @@ public class TestMain {
 							
 							if(nombreUser.equals(nombreUsuario) && contrasena.equals(password)) {
 								if(permisos==0){ // MENU DEL CLIENTE
-									System.out.println("ERES CLIENTE");
+									do {
+										System.out.println("ERES CLIENTE");
+										opcionCliente = menuCliente();
+										switch(opcionCliente) {
+										case 1: // 		SELECCIONAR PRODUCTOS DE LA LISTA	
+											// Consulta SQL
+											sql = "SELECT * from Producto";
+											rs = stmt.executeQuery(sql);
+											
+											//PASO 5: Extraer datos ResultSet
+											if(rs.isBeforeFirst()) {
+												
+												while(rs.next()) {
+													// Recibir por tipo de columna
+													int idProducto = rs.getInt("idProducto");
+													String nombreProducto = rs.getString("nombre");
+													int cantidad = rs.getInt("cantidad");
+													float preciUnitario = rs.getFloat("precio");
+													String marca = rs.getString("marca");
+													String descripcion = rs.getString("descripcion");
+													
+													System.out.println("---------------------------------");
+													System.out.println(idProducto + ")" + "Producto: " + nombreProducto + "( " + marca + ")" + "\n" + 
+																	   "Precio: " + preciUnitario + "\n" + 
+																	   "Cantidad: " + cantidad + "\n" +
+																	   "Descripcion: " + descripcion + "\n" ); 
+													System.out.println("---------------------------------");
+												}
+												
+												while(opcionCliente == 1) {
+													System.out.println("Ingrese el numero del producto que quiere comprar");
+													seleccion = teclado.nextInt();
+													while(rs.next()) {
+														int idProducto = rs.getInt("idProducto");
+														if(idProducto == seleccion) {
+															sql = "insert into Ticket (Cliente_idCliente, Cliente_Usuairo_idUsuairo, Producto_idProducto)values("+
+														1 + "," + id + idProducto; // FALTA TERMINAR (debo retornar el id del cliente para poder saber a que cliente agregar el producto)
+														}
+													}
+												}
+												
+											}
+											else {
+												System.out.println("No hay Productos en Venta");
+											}
+											
+											
+											
+											
+											
+											break;
+										case 2:
+											break;
+										case 3:
+											break;
+										}
+									}while(opcionCliente != 0);
 								}
 								else { // MENU DEL ADMINISTRADOR
 									System.out.println("ERES ADMIN");
@@ -225,3 +306,5 @@ public class TestMain {
 	
 	
 }
+
+
