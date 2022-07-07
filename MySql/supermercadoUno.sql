@@ -19,6 +19,7 @@
 -- Table structure for table `administrador`
 --
 
+
 DROP TABLE IF EXISTS `administrador`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
@@ -174,3 +175,31 @@ UNLOCK TABLES;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
 -- Dump completed on 2022-07-05 20:55:50
+
+--
+-- Table structure for table `ProductoComprado`
+--
+create table ProductoComprado (
+	idProductoComprado int auto_increment,
+    Cliente_idCliente int,
+    Usuario_idUsuario int,
+    Producto_idProducto int,
+    primary key (idProductoComprado),
+    foreign key (Cliente_idCliente) references Cliente (idCliente),
+	foreign key (Usuario_idUsuario) references Usuario(idUsuairo),
+    foreign key (Producto_idProducto) references Producto (idProducto)
+);
+select * from ProductoComprado ;
+
+create database supermercadoUno; 
+use supermercadoUno;
+
+select * from Ticket;
+insert into Usuario (nombreUsuario, password, permisos)values('mercado', '1234', 1);
+insert into  Administrador (nombre, apellido, administrador_es_usuario)values('MERCADO', 'S.R.L', 3);
+ 
+ delete from Administrador where idAdministrador=2;
+ 
+ insert into  producto (nombre, cantidad, precioUnitario, marca)values('papel higienico', 5, 140.0, 'Meterete');
+
+select count(p.idProducto) from producto p; --- left join user u on u.id = p.created_by group by p.created_by
