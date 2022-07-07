@@ -251,15 +251,30 @@ public class TestMain {
 												System.out.println("No hay Productos en Venta");
 											}
 											break;
-										case 2:
+										case 2:	//2)Ver lista de productos
 											break;
-										case 3:
+										case 3:	//3)Autorizar compra
 											break;
 										}
 									}while(opcionCliente != 0);
 								}
+								
+								
 								else { // MENU DEL ADMINISTRADOR
 									System.out.println("ERES ADMIN");
+									opcionCliente = menuAdministrador();
+									switch (opcionCliente) {
+									case 1: //1)Cargar productos
+										break;
+									case 2:	//2)Ver todos los usuarios que realizaron una compra
+										break;
+									case 3: //3)Ver listado de productos seleccionados por el usuario
+										break;
+									}
+									
+		
+									
+									
 								}
 							}
 							else {
@@ -340,7 +355,19 @@ public class TestMain {
 		return x;
 	}
 	
-	
+	public static int menuAdministrador() {
+		int x;
+		Scanner teclado = new Scanner(System.in);
+		do {
+			System.out.println("Ingrese una opcion:");
+			System.out.println("1)Cargar productos");
+			System.out.println("2)Ver todos los usuarios que realizaron una compra");
+			System.out.println("3)Ver listado de productos seleccionados por el usuario");
+			System.out.println("0)Menu Principal");
+			x=teclado.nextInt();
+		}while(x<0 || x>3);
+		return x;
+	}
 }
 
 
