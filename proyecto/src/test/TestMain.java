@@ -267,6 +267,20 @@ public class TestMain {
 									case 1: //1)Cargar productos
 										break;
 									case 2:	//2)Ver todos los usuarios que realizaron una compra
+										sql = "select u.idUsuairo, u.nombreUsuario from usuario u inner join ProductoComprado p on u.idUsuairo = p.Usuario_idUsuario";
+										rs = stmt.executeQuery(sql);
+										//PASO 5: Extraer datos ResultSet
+										if(rs.isBeforeFirst()) {
+											while(rs.next()) {
+												// Recibir por tipo de columna
+												int idUsuario = rs.getInt("u.idUsuairo");
+												String nombreCliente = rs.getString("u.nombreUsuario");
+												mostrar_un_Usuario(idUsuario, nombreCliente);
+											}
+										}
+										else {
+											System.out.println("Aun no se ha realizado ninguna compra.");
+										}
 										break;
 									case 3: //3)Ver listado de productos seleccionados por el usuario
 										break;
@@ -367,6 +381,12 @@ public class TestMain {
 			x=teclado.nextInt();
 		}while(x<0 || x>3);
 		return x;
+	}
+	
+	
+	/// 	MOSTRAR CADA USUARIO
+	public static void mostrar_un_Usuario(int id, String nombre) {
+		System.out.println("Nro: " + id + " Nombre: " + nombre);
 	}
 }
 
