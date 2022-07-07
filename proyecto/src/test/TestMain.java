@@ -151,7 +151,7 @@ public class TestMain {
 					password=teclado.nextLine();
 					
 					// Consulta SQL
-					sql = "SELECT nombreUsuario, password, permisos from Usuario";
+					sql = "SELECT * from Usuario";
 					rs = stmt.executeQuery(sql);
 					
 					//PASO 5: Extraer datos ResultSet
@@ -162,8 +162,23 @@ public class TestMain {
 							String contrasena = rs.getString("password");
 							int permisos = rs.getInt("permisos");
 							
-							if(nombreUser.equals(nombreUsuario) && contrasena.equals(password)) {
+							if(nombreUser.equals(nombreUsuario) && contrasena.equals(password)) {													
 								if(permisos==0){ // MENU DEL CLIENTE
+									
+									/*		CONSEGUIMOS EL ID CLIENTE Y USUARIO QUE HAYA INICIADO SESION 	*/
+									id_usuario = rs.getInt("idUsuairo");			//
+									sql = "SELECT * from Cliente";					//
+									rs = stmt.executeQuery(sql);					//						
+									//PASO 5: Extraer datos ResultSet				//
+									if(rs.isBeforeFirst()) {						//
+										while(rs.next()) {							//
+											id = rs.getInt("cliente_es_usuario");	//
+											if(id == id_usuario)					//
+												id_cliente = rs.getInt("idCliente");//
+										}
+									}
+									
+									/* 		CONTINUAMOS CON EL MENU CLIENTE 		*/
 									do {
 										System.out.println("ERES CLIENTE");
 										opcionCliente = menuCliente();
@@ -172,16 +187,20 @@ public class TestMain {
 											// Consulta SQL
 											sql = "SELECT * from Producto";
 											rs = stmt.executeQuery(sql);
+													
+
+											int contadorDeProductos = 0;
 											
 											//PASO 5: Extraer datos ResultSet
 											if(rs.isBeforeFirst()) {
-												
 												while(rs.next()) {
+													
+													
 													// Recibir por tipo de columna
 													int idProducto = rs.getInt("idProducto");
 													String nombreProducto = rs.getString("nombre");
 													int cantidad = rs.getInt("cantidad");
-													float preciUnitario = rs.getFloat("precio");
+													float preciUnitario = rs.getFloat("precioUnitario");
 													String marca = rs.getString("marca");
 													String descripcion = rs.getString("descripcion");
 													
@@ -196,24 +215,41 @@ public class TestMain {
 												while(opcionCliente == 1) {
 													System.out.println("Ingrese el numero del producto que quiere comprar");
 													seleccion = teclado.nextInt();
-													while(rs.next()) {
-														int idProducto = rs.getInt("idProducto");
-														if(idProducto == seleccion) {
-															sql = "insert into Ticket (Cliente_idCliente, Cliente_Usuairo_idUsuairo, Producto_idProducto)values("+
-														1 + "," + id + idProducto; // FALTA TERMINAR (debo retornar el id del cliente para poder saber a que cliente agregar el producto)
-														}
+													
+													if(rs.isBeforeFirst()) {
+														System.out.println("leera el primer elemento");
 													}
+													else {
+														System.out.println("se paso del primer elemento");
+													}
+													
+													sql = "select count(p.idProducto) from producto p";
+													rs = stmt.executeQuery(sql);
+														
+													while(rs.next()) {
+														contadorDeProductos = rs.getInt("count(p.idProducto)");
+													}
+													if(seleccion <= contadorDeProductos && seleccion >= 1) {
+														sql = "insert into Ticket (Cliente_idCliente, Cliente_idUsuario, Producto_idProducto)values(?,?,?)";
+														ps = conn.prepareStatement(sql); 
+														ps.setInt(1, id_cliente);
+														ps.setInt(2, id_usuario);
+														ps.setInt(3, seleccion);
+														ps.execute();
+														
+														System.out.println("Agregado al carrito");
+													}
+													else {
+															System.out.println("No existe el producto elegido");
+														}
+													System.out.println("1)Continuar seleccionando. \n2)Salir.");
+													opcionCliente = teclado.nextInt();
 												}
 												
 											}
 											else {
 												System.out.println("No hay Productos en Venta");
 											}
-											
-											
-											
-											
-											
 											break;
 										case 2:
 											break;
