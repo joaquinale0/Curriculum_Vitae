@@ -400,8 +400,10 @@ public class TestMain {
 												contadorDeUsuario++;
 											}
 											id_usuario = elegirUsuario(contadorDeUsuario);
-											sql = "select u.idUsuairo, u.nombreUsuario from usuario u inner join Cliente c on u.idUsuairo = c.Usuario_idUsuario";
-											rs = stmt.executeQuery(sql);
+											//sql = "select  from productocomprado pc inner join Producto p on pc.";
+											//rs = stmt.executeQuery(sql);
+											
+											
 										}
 										else {
 											System.out.println("Aun no se ha realizado ninguna compra.");
@@ -505,7 +507,7 @@ public class TestMain {
 
 	/// 	MOSTRAR CADA USUARIO
 	public static void mostrar_un_Usuario(int id, String nombre) {
-		System.out.println("Nro: " + id + " Nombre: " + nombre);
+		System.out.println("Nro: " + id + " Nombre de usuario: " + nombre);
 	}
 	// SELECCIONAR UN USUARIO
 	public static int elegirUsuario(int n) {
