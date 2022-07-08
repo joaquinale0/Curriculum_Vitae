@@ -23,8 +23,8 @@ public class TestMain {
 	//variables globales
 	static int id_cliente;
 	static int id_usuario;
-	
-	
+
+
 
 	public static void main(String[] args) {
 
@@ -53,11 +53,13 @@ public class TestMain {
 
 		// variable local main gustavo (administrador menu)
 		int opcionProducto;
+		// variable local main joaquin(administrador case 3) 
+		int contadorDeUsuario = 0;
 
 		/*  CONEXIONES Y REGISTROS MYSQL */
 		// creamos variable String sql para escribir en codigo sql
 		//dentro de java el objeto 'ResultSet = SELECT'
-		String sql;
+		String sql, mySql;
 		ResultSet rs = null;
 
 		//registrar el driver
@@ -147,7 +149,6 @@ public class TestMain {
 					break;
 				}
 				case 2:{ 	// INICIAR SESION
-
 					System.out.println("Ingrese los siguientes datos");
 					System.out.println("Nombre de Usuario: ");
 					nombreUsuario=teclado.nextLine();
@@ -165,6 +166,7 @@ public class TestMain {
 							String nombreUser = rs.getString("nombreUsuario");
 							String contrasena = rs.getString("password");
 							int permisos = rs.getInt("permisos");
+							id = rs.getInt("idUsuairo");
 
 							if(nombreUser.equals(nombreUsuario) && contrasena.equals(password)) {													
 								if(permisos==0){ // MENU DEL CLIENTE
@@ -228,7 +230,7 @@ public class TestMain {
 													while(rs.next()) {
 														contadorDeProductos = rs.getInt("idProducto");	
 													}
-												
+
 													if(seleccion <= contadorDeProductos && seleccion >= 1) {
 														sql = "insert into Ticket (Cliente_idCliente, Cliente_idUsuario, Producto_idProducto)values(?,?,?)";
 														ps = conn.prepareStatement(sql); 
@@ -252,10 +254,79 @@ public class TestMain {
 												System.out.println("No hay Productos en Venta");
 											}
 											break;
-										case 2:	//2)Ver lista de productos
+										case 2:	//2)Ver lista de productos seleccionado
+											System.out.println("Sus productos seleccionados son: ");
+											sql = "select p.nombre, p.precioUnitario, p.marca, p.descripcion from Producto p inner join Ticket t on t.Cliente_idUsuario = " + 
+													id_usuario + " and t.Producto_idProducto = p.idProducto";
+											rs = stmt.executeQuery(sql);
+											//PASO 5: Extraer datos ResultSet
+											if(rs.isBeforeFirst()) {
+												while(rs.next()) {
+													// Recibir por tipo de columna
+													String descripcion = rs.getString("p.descripcion");
+													String nombreProducto = rs.getString("p.nombre");
+													float preciUnitario = rs.getFloat("p.precioUnitario");
+													String marca = rs.getString("p.marca");
+
+													System.out.println("---------------------------------");
+													System.out.println("Producto: " + nombreProducto + "( " + marca + ")" + "\n" + 
+															"Precio: " + preciUnitario + "\n" +
+															"Descripcion: " + descripcion);
+													System.out.println("---------------------------------");
+												}
+											}
+											else {
+												System.out.println("No se a seleccionado ningun producto.");
+											}
 											break;
 										case 3:	//3)Autorizar compra
+											Boolean compraRealizada = false;
+											// Consulta SQL
+											sql = "SELECT * from Ticket";
+											rs = stmt.executeQuery(sql);
 
+											//PASO 5: Extraer datos ResultSet
+											if(rs.isBeforeFirst()) {
+												while(rs.next()) {
+													// Recibir por tipo de columna
+													int idUser = rs.getInt("Cliente_idUsuario");
+													if(idUser == id_usuario) {
+														int idProducto = rs.getInt("Producto_idProducto");
+
+														//CARGANDO EN TABLA(ProductoComprado) DONDE SE REALIZAN LAS COMPRAS
+														mySql = "insert into ProductoComprado (Cliente_idCliente, Usuario_idUsuario, Producto_idProducto)values(?,?,?)";
+														ps = conn.prepareStatement(mySql); 
+
+														ps.setInt(1, id_cliente);
+														ps.setInt(2, id_usuario);
+														ps.setInt(3, idProducto);
+														ps.execute();
+
+														compraRealizada = true;
+													}
+
+												}
+												if(compraRealizada) {
+													System.out.println("Su compra ha sido realizada.");
+												}
+												else {
+													System.out.println("No ha seleccionado ningun producto."); // no tenia seleccionado productos en ticket
+												}
+											}
+											else {
+												System.out.println("No ha seleccionado ningun producto"); //ticket esta vacio
+											}
+
+											// ELIMINAR PRODUCTO DE LISTA SELECCIONADA (Tabla Ticket)
+
+											try {
+												sql = "delete from Ticket where Cliente_idUsuario = " + id_usuario;
+												stmt.executeUpdate(sql);
+												System.out.println("Realizado");
+											}
+											catch (Exception e) {
+												System.out.println("No hay elementos seleccionados");  //ticket esta vacio
+											}
 											break;
 										}
 									}while(opcionCliente != 0);
@@ -264,155 +335,194 @@ public class TestMain {
 
 								else { // MENU DEL ADMINISTRADOR
 									System.out.println("ERES ADMIN");
-									opcionCliente = menuAdministrador();
-									switch (opcionCliente) {
-									case 1: //1)Cargar productos
-										///////////////////////////////////////////// GUSTAVO ///////////////////////////////////////////////////////////////
+									do {
+										opcionCliente = menuAdministrador();
+										switch (opcionCliente) {
+										case 1: //1)Cargar productos
+											///////////////////////////////////////////// GUSTAVO ///////////////////////////////////////////////////////////////
 
-										do {
-											opcionProducto = menuProducto();
-											Producto prod = new Producto();
-											switch(opcionProducto) {
+											do {
+												opcionProducto = menuProducto();
+												Producto prod = new Producto();
+												switch(opcionProducto) {
 
-											case 1:
+												case 1:
 
-												sql = "select * from producto";
+													sql = "select * from producto";
 
-												rs = stmt.executeQuery(sql);
-												prod.listarProductos(rs);
+													rs = stmt.executeQuery(sql);
+													prod.listarProductos(rs);
 
-												break;
-											case 2:
+													break;
+												case 2:
 
-												prod.capturaDatosProducto();
-
-												sql = "INSERT INTO producto (nombre,cantidad,precioUnitario,marca,descripcion) VALUES (?,?,?,?,?)";
-												ps = conn.prepareStatement(sql); 
-												ps.setString(1, prod.getNombre());
-												ps.setInt(2, prod.getCantidad());
-												ps.setFloat(3,prod.getPrecioUnitario());
-												ps.setString(4, prod.getMarca());
-												ps.setString(5, prod.getDescripcion());
-												ps.execute();
-												break;
-											case 3:
-												System.out.println("Ingresar codigo  del producto: ");
-												int idP=teclado.nextInt();
-												sql = "select * from producto WHERE idProducto="+idP;
-
-												rs = stmt.executeQuery(sql);
-												while(rs.next()){
-													prod.setId(rs.getInt("idProducto"));
-													prod.setNombre(rs.getString("nombre"));
-													prod.setCantidad(rs.getInt("cantidad"));
-													prod.setPrecioUnitario(rs.getFloat("precioUnitario"));
-													prod.setMarca(rs.getString("marca"));
-													prod.setDescripcion(rs.getString("descripcion"));
-												}
-												rs.close();
-												String opcionMod = "NO";
-
-
-												prod.mostrarProducto();
-												System.out.println("Desea modificar el Producto SI/NO: ");
-												opcionMod=teclado.next();
-
-												if(opcionMod.equals("SI")) {
 													prod.capturaDatosProducto();
-													sql = "UPDATE producto SET nombre = ?, cantidad = ?,precioUnitario =?, marca =?,descripcion=? WHERE idProducto=?";
+
+													sql = "INSERT INTO producto (nombre,cantidad,precioUnitario,marca,descripcion) VALUES (?,?,?,?,?)";
 													ps = conn.prepareStatement(sql); 
 													ps.setString(1, prod.getNombre());
 													ps.setInt(2, prod.getCantidad());
 													ps.setFloat(3,prod.getPrecioUnitario());
 													ps.setString(4, prod.getMarca());
 													ps.setString(5, prod.getDescripcion());
-													ps.setInt(6, prod.getId());
-													ps.executeUpdate();
-												}
+													ps.execute();
+													break;
+												case 3:
+													System.out.println("Ingresar codigo  del producto: ");
+													int idP=teclado.nextInt();
+													sql = "select * from producto WHERE idProducto="+idP;
 
-												break;
-											case 4:
-												System.out.println("Ingresar codigo  del producto: ");
-												int idPD=teclado.nextInt();
-												teclado.nextLine(); //LIMPIAMOS EL BUFFER
-												sql = "select * from producto WHERE idProducto="+idPD;
-
-												rs = stmt.executeQuery(sql);
-												while(rs.next()){
-													prod.setId(rs.getInt("idProducto"));
-													prod.setNombre(rs.getString("nombre"));
-													prod.setCantidad(rs.getInt("cantidad"));
-													prod.setPrecioUnitario(rs.getFloat("precioUnitario"));
-													prod.setMarca(rs.getString("marca"));
-													prod.setDescripcion(rs.getString("descripcion"));
-												}
-												//rs.close();
-												String opcionDel = "NO";
-												prod.mostrarProducto();
-												System.out.println("Desea eliminar el Producto SI/NO: ");
-												opcionDel=teclado.next();
-
-												if(opcionDel.equals("SI")) {
-													try {
-														sql = "DELETE FROM Producto WHERE idProducto ="+idPD;
-														stmt.executeUpdate(sql);
-														sql = "select * from producto";
-														rs = stmt.executeQuery(sql);
-														prod.listarProductos(rs);
-													}catch (Exception e) {
-														System.out.println("No se pudo eliminar el producto esta uso en un carrito");
+													rs = stmt.executeQuery(sql);
+													while(rs.next()){
+														prod.setId(rs.getInt("idProducto"));
+														prod.setNombre(rs.getString("nombre"));
+														prod.setCantidad(rs.getInt("cantidad"));
+														prod.setPrecioUnitario(rs.getFloat("precioUnitario"));
+														prod.setMarca(rs.getString("marca"));
+														prod.setDescripcion(rs.getString("descripcion"));
 													}
+													rs.close();
+													String opcionMod = "NO";
+
+
+													prod.mostrarProducto();
+													System.out.println("Desea modificar el Producto SI/NO: ");
+													opcionMod=teclado.next();
+
+													if(opcionMod.equals("SI")) {
+														prod.capturaDatosProducto();
+														sql = "UPDATE producto SET nombre = ?, cantidad = ?,precioUnitario =?, marca =?,descripcion=? WHERE idProducto=?";
+														ps = conn.prepareStatement(sql); 
+														ps.setString(1, prod.getNombre());
+														ps.setInt(2, prod.getCantidad());
+														ps.setFloat(3,prod.getPrecioUnitario());
+														ps.setString(4, prod.getMarca());
+														ps.setString(5, prod.getDescripcion());
+														ps.setInt(6, prod.getId());
+														ps.executeUpdate();
+													}
+
+													break;
+												case 4:
+													System.out.println("Ingresar codigo  del producto: ");
+													int idPD=teclado.nextInt();
+													teclado.nextLine(); //LIMPIAMOS EL BUFFER
+													sql = "select * from producto WHERE idProducto="+idPD;
+
+													rs = stmt.executeQuery(sql);
+													while(rs.next()){
+														prod.setId(rs.getInt("idProducto"));
+														prod.setNombre(rs.getString("nombre"));
+														prod.setCantidad(rs.getInt("cantidad"));
+														prod.setPrecioUnitario(rs.getFloat("precioUnitario"));
+														prod.setMarca(rs.getString("marca"));
+														prod.setDescripcion(rs.getString("descripcion"));
+													}
+													//rs.close();
+													String opcionDel = "NO";
+													prod.mostrarProducto();
+													System.out.println("Desea eliminar el Producto SI/NO: ");
+													opcionDel=teclado.next();
+
+													if(opcionDel.equals("SI")) {
+														try {
+															sql = "DELETE FROM Producto WHERE idProducto ="+idPD;
+															stmt.executeUpdate(sql);
+															sql = "select * from producto";
+															rs = stmt.executeQuery(sql);
+															prod.listarProductos(rs);
+														}catch (Exception e) {
+															System.out.println("No se pudo eliminar el producto esta uso en un carrito");
+														}
+													}
+													break;
 												}
-												break;
-											}
 
-										}while(opcionProducto != 0);
+											}while(opcionProducto != 0);
 
-										////////////////////////////////////// GUSTAVO ///////////////////////////////////////
-										break;
-									case 2:	//2)Ver todos los usuarios que realizaron una compra
-										sql = "select u.idUsuairo, u.nombreUsuario from usuario u inner join ProductoComprado p on u.idUsuairo = p.Usuario_idUsuario";
-										rs = stmt.executeQuery(sql);
-										//PASO 5: Extraer datos ResultSet
-										if(rs.isBeforeFirst()) {
-											while(rs.next()) {
-												// Recibir por tipo de columna
-												int idUsuario = rs.getInt("u.idUsuairo");
-												String nombreCliente = rs.getString("u.nombreUsuario");
-												mostrar_un_Usuario(idUsuario, nombreCliente);
+											////////////////////////////////////// GUSTAVO ///////////////////////////////////////
+											break;
+										case 2:	//2)Ver todos los usuarios que realizaron una compra
+											sql = "select u.idUsuairo, u.nombreUsuario from usuario u inner join ProductoComprado p on u.idUsuairo = p.Usuario_idUsuario";
+											rs = stmt.executeQuery(sql);
+											//PASO 5: Extraer datos ResultSet
+											if(rs.isBeforeFirst()) {
+												while(rs.next()) {
+													// Recibir por tipo de columna
+													int idUsuario = rs.getInt("u.idUsuairo");
+													String nombreCliente = rs.getString("u.nombreUsuario");
+													mostrar_un_Usuario(idUsuario, nombreCliente);
+												}
 											}
-										}
-										else {
-											System.out.println("Aun no se ha realizado ninguna compra.");
-										}
-										break;
-									case 3: //3)Ver listado de productos seleccionados por el usuario
-										sql = "select u.idUsuairo, u.nombreUsuario from usuario u inner join Cliente c on u.idUsuairo = c.Usuario_idUsuario";
-										rs = stmt.executeQuery(sql);
-										int contadorDeUsuario = 0;
-										//PASO 5: Extraer datos ResultSet
-										if(rs.isBeforeFirst()) {
-											while(rs.next()) {
-												// Recibir por tipo de columna
-												int idUsuario = rs.getInt("u.idUsuairo");
-												String nombreCliente = rs.getString("u.nombreUsuario");
-												mostrar_un_Usuario(idUsuario, nombreCliente);
-												contadorDeUsuario++;
+											else {
+												System.out.println("Aun no se ha realizado ninguna compra.");
 											}
-											id_usuario = elegirUsuario(contadorDeUsuario);
-											//sql = "select  from productocomprado pc inner join Producto p on pc.";
-											//rs = stmt.executeQuery(sql);
-											
-											
-										}
-										else {
-											System.out.println("Aun no se ha realizado ninguna compra.");
-										}
-										break;
-									}
+											break;
+										case 3: //3)Ver listado de productos seleccionados por el usuario
+											sql = "select u.idUsuairo, u.nombreUsuario from usuario u inner join Cliente c on u.idUsuairo = c.cliente_es_usuario";
+											rs = stmt.executeQuery(sql);
+											//PASO 5: Extraer datos ResultSet
+											if(rs.isBeforeFirst()) {
+												while(rs.next()) {
+													// Recibir por tipo de columna
+													int idUsuario = rs.getInt("u.idUsuairo");
+													String nombreCliente = rs.getString("u.nombreUsuario");
+													mostrar_un_Usuario(idUsuario, nombreCliente);
+												}
+												/*		CONTADOR DE USUARIO		*/
+												sql = "select * from Usuario";
+												rs = stmt.executeQuery(sql);
+
+												while(rs.next()) {
+													contadorDeUsuario = rs.getInt("idUsuairo");	
+												}
+												/*		CONTADOR DE USUARIO 	*/
+												id_usuario = elegirUsuario(contadorDeUsuario);
+												if(id_usuario <= contadorDeUsuario && id_usuario >= 1) {
+													while(rs.next()) {
+														int iduser = rs.getInt("idUsuairo");
+														if(id_usuario == iduser) {
+															String usuarionombre = rs.getString("nombreUsuario");
+															System.out.println("USUARIO ELEGIDO: " + usuarionombre );
+														}
+													}
+													// Consulta SQL
+													sql = "select p.nombre, p.precioUnitario, p.marca from Producto p inner join ProductoComprado pc on pc.Usuario_idUsuario = " + 
+															id_usuario + " and pc.Producto_idProducto = p.idProducto";
+													rs = stmt.executeQuery(sql);
+													//PASO 5: Extraer datos ResultSet
+													if(rs.isBeforeFirst()) {
+														while(rs.next()) {
+															// Recibir por tipo de columna
+															String nombreProducto = rs.getString("p.nombre");
+															float preciUnitario = rs.getFloat("p.precioUnitario");
+															String marca = rs.getString("p.marca");
+
+															System.out.println("---------------------------------");
+															System.out.println("Producto: " + nombreProducto + "( " + marca + ")" + "\n" + 
+																	"Precio: " + preciUnitario + "\n" );
+															System.out.println("---------------------------------");
+														}
+													}
+													else {
+														System.out.println("No realizo ninguna compra.");
+													}
+												}// FIN DEL IF(DE LA MUESTRA DE LAS COMPRAS DEL USUARIO ELEGIDO)
+												else {
+													System.out.println("No existe ese usuario.");
+												}
+
+											}// FIN DEL IF DONDE MUESTRAN LOS USUARIOS PARA ELEGIRLO
+											else {
+												System.out.println("Aun no se ha realizado ninguna compra.");
+											}
+											break;
+										}// FIN CASE 3 MENU ADMINISTRADOR
+									}while(opcionCliente != 0);
 								}
 							}
-							else {
+
+							else if(rs.isLast()){
 								System.out.println("Su Nombre de Usuario o contraseña es incorrecto");
 							}
 
@@ -421,7 +531,6 @@ public class TestMain {
 					else {
 						System.out.println("No Hay Usuarios Creados");
 					}
-
 					break;
 				}
 

@@ -198,8 +198,15 @@ select * from Ticket;
 insert into Usuario (nombreUsuario, password, permisos)values('mercado', '1234', 1);
 insert into  Administrador (nombre, apellido, administrador_es_usuario)values('MERCADO', 'S.R.L', 3);
  
- delete from Administrador where idAdministrador=2;
+ delete from usuario where idUsuairo=5;
+ delete from Ticket where Cliente_idUsuario = 2;
+ 
  
  insert into  producto (nombre, cantidad, precioUnitario, marca)values('papel higienico', 5, 140.0, 'Meterete');
 
 select count(p.idProducto) from producto p; --- left join user u on u.id = p.created_by group by p.created_by
+select u.idUsuairo, u.nombreUsuario from usuario u inner join Cliente c on u.idUsuairo = c.cliente_es_usuario;
+
+select p.nombre, p.precioUnitario, p.marca, p.descripcion from Producto p inner join Ticket t on t.Cliente_idUsuario = 2 and t.Producto_idProducto = p.idProducto;
+
+select p.nombre, p.precioUnitario, p.marca from Producto p inner join ProductoComprado pc on pc.Usuario_idUsuario = 2 and pc.Producto_idProducto = p.idProducto;
