@@ -1,5 +1,6 @@
 package test;
 import java.lang.System.Logger;
+import java.net.Socket;
 import java.sql.*;
 import java.util.LinkedList;
 import java.util.Queue;
@@ -55,12 +56,15 @@ public class TestMain {
 		int opcionProducto;
 		// variable local main joaquin(administrador case 3) 
 		int contadorDeUsuario = 0;
-
+		// variable de stock
+		int stock=0;
+		
 		/*  CONEXIONES Y REGISTROS MYSQL */
 		// creamos variable String sql para escribir en codigo sql
 		//dentro de java el objeto 'ResultSet = SELECT'
 		String sql, mySql;
 		ResultSet rs = null;
+		ResultSet resultset = null;
 
 		//registrar el driver
 		Connection conn = null;
@@ -104,9 +108,6 @@ public class TestMain {
 					//CARGANDO EL  USUARIO
 					sql = "insert into Usuario (nombreUsuario, password, permisos)values(?,?,?)";
 
-					/*"('" + nombreUsuario + "','" + password + "',"+ 0 + ")";
-					rs = stmt.executeQuery(sql);*/
-
 					ps = conn.prepareStatement(sql); 
 					ps.setString(1, nombreUsuario);
 					ps.setString(2, password);
@@ -139,12 +140,6 @@ public class TestMain {
 					ps.setInt(3, dni);
 					ps.setInt(4, id_usuario);
 					ps.execute();
-
-					/*"('" + nombre + "','" + apellido  + "'," + dni + ")";
-					rs = stmt.executeQuery(sql); */
-
-
-					/* FALTA AGREGAR LOS DATOS DE LA TABLA Usuario*/
 
 					break;
 				}
@@ -228,21 +223,58 @@ public class TestMain {
 													rs = stmt.executeQuery(sql);
 
 													while(rs.next()) {
-														contadorDeProductos = rs.getInt("idProducto");	
+														contadorDeProductos = rs.getInt("idProducto");
+														if(rs.getInt("idProducto") == seleccion) {
+															stock = rs.getInt("cantidad");
+														}
 													}
 
-													if(seleccion <= contadorDeProductos && seleccion >= 1) {
-														sql = "insert into Ticket (Cliente_idCliente, Cliente_idUsuario, Producto_idProducto)values(?,?,?)";
-														ps = conn.prepareStatement(sql); 
-														ps.setInt(1, id_cliente);
-														ps.setInt(2, id_usuario);
-														ps.setInt(3, seleccion);
-														ps.execute();
+													if(seleccion <= contadorDeProductos && seleccion >= 1 && stock > 0) {
+														sql = "select count(t.Producto_idProducto) from ticket t where Cliente_idUsuario = " + id_usuario;
+														rs = stmt.executeQuery(sql);
+														int contadorProductosSeleccionados = 0;
+														while(rs.next()) {
+															contadorProductosSeleccionados = rs.getInt("count(t.Producto_idProducto)");
+														}
+														if(contadorProductosSeleccionados < 30 && contadorProductosSeleccionados >= 0) {
+															
+															
+																// MODIFICAR Y DISMINUIR CANTIDAD DE PRODUCTOS
+															String nombreProducto = null;
+															
+															resultset = stmt.executeQuery("select * from producto where idProducto = " + seleccion);
+															while(resultset.next()) {
+																stock = resultset.getInt("cantidad");
+																nombreProducto = resultset.getString("nombre");
+															}
+																if(stock > 0) {
+																	//MODIFICAMOS LA CANTIDAD DE PRODUCTOS
+																	ps = conn.prepareStatement("UPDATE producto SET cantidad = ? WHERE idProducto = "+ seleccion); 
+																	stock--;
+																	ps.setInt(1, stock);
+																	ps.executeUpdate();
+																	
+																	
+																	// AGREGANDO EN LA LISTA DE SELECCIONADO
+																	sql = "insert into Ticket (Cliente_idCliente, Cliente_idUsuario, Producto_idProducto)values(?,?,?)";
+																	ps = conn.prepareStatement(sql); 
+																	ps.setInt(1, id_cliente);
+																	ps.setInt(2, id_usuario);
+																	ps.setInt(3, seleccion);
+																	ps.execute();
 
-														System.out.println("Agregado al carrito");
-													}
+																	System.out.println("Agregado al carrito");
+																	contadorProductosSeleccionados++;
+																	System.out.println("Producto seleccionado: " + contadorProductosSeleccionados + "/30" );
+
+																}
+														}
+														else {
+															System.out.println("Ya has seleccionado la cantidad maxima de 30 productos.");
+														}
+																											}
 													else {
-														System.out.println("No existe el producto elegido");
+														System.out.println("No existe el producto elegido o no hay producto en stock");
 													}
 													System.out.println("1)Continuar seleccionando. \n2)Salir.");
 													opcionCliente = teclado.nextInt();
@@ -292,7 +324,7 @@ public class TestMain {
 													int idUser = rs.getInt("Cliente_idUsuario");
 													if(idUser == id_usuario) {
 														int idProducto = rs.getInt("Producto_idProducto");
-
+														
 														//CARGANDO EN TABLA(ProductoComprado) DONDE SE REALIZAN LAS COMPRAS
 														mySql = "insert into ProductoComprado (Cliente_idCliente, Usuario_idUsuario, Producto_idProducto)values(?,?,?)";
 														ps = conn.prepareStatement(mySql); 
@@ -307,26 +339,21 @@ public class TestMain {
 
 												}
 												if(compraRealizada) {
+													
+													// ELIMINAR PRODUCTO DE LISTA SELECCIONADA (Tabla Ticket)
 													System.out.println("Su compra ha sido realizada.");
+													sql = "delete from Ticket where Cliente_idUsuario = " + id_usuario;
+													stmt.executeUpdate(sql);
+													System.out.println("Realizado");
 												}
 												else {
 													System.out.println("No ha seleccionado ningun producto."); // no tenia seleccionado productos en ticket
 												}
 											}
 											else {
-												System.out.println("No ha seleccionado ningun producto"); //ticket esta vacio
+												System.out.println("No hay producto seleccionados en el ticket"); //ticket esta vacio
 											}
 
-											// ELIMINAR PRODUCTO DE LISTA SELECCIONADA (Tabla Ticket)
-
-											try {
-												sql = "delete from Ticket where Cliente_idUsuario = " + id_usuario;
-												stmt.executeUpdate(sql);
-												System.out.println("Realizado");
-											}
-											catch (Exception e) {
-												System.out.println("No hay elementos seleccionados");  //ticket esta vacio
-											}
 											break;
 										}
 									}while(opcionCliente != 0);
@@ -591,7 +618,7 @@ public class TestMain {
 		do {
 			System.out.println("Ingrese una opcion:");
 			System.out.println("1)Seleccionar Productos");
-			System.out.println("2)Ver lista de productos");
+			System.out.println("2)Ver lista de productos seleccionados");
 			System.out.println("3)Autorizar compra");
 			System.out.println("0)Menu Principal");
 			x=teclado.nextInt();
@@ -604,9 +631,9 @@ public class TestMain {
 		Scanner teclado = new Scanner(System.in);
 		do {
 			System.out.println("Ingrese una opcion:");
-			System.out.println("1)Cargar productos");
+			System.out.println("1)Menu de Productos");
 			System.out.println("2)Ver todos los usuarios que realizaron una compra");
-			System.out.println("3)Ver listado de productos seleccionados por el usuario");
+			System.out.println("3)Ver listado de productos comprados por el usuario");
 			System.out.println("0)Menu Principal");
 			x=teclado.nextInt();
 		}while(x<0 || x>3);
