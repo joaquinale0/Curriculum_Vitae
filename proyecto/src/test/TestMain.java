@@ -58,13 +58,13 @@ public class TestMain {
 		int contadorDeUsuario = 0;
 		// variable de stock
 		int stock=0;
+		int[] listaProductos = new int[30];
 		
 		/*  CONEXIONES Y REGISTROS MYSQL */
 		// creamos variable String sql para escribir en codigo sql
 		//dentro de java el objeto 'ResultSet = SELECT'
 		String sql, mySql;
 		ResultSet rs = null;
-		ResultSet resultset = null;
 
 		//registrar el driver
 		Connection conn = null;
@@ -242,10 +242,10 @@ public class TestMain {
 																// MODIFICAR Y DISMINUIR CANTIDAD DE PRODUCTOS
 															String nombreProducto = null;
 															
-															resultset = stmt.executeQuery("select * from producto where idProducto = " + seleccion);
-															while(resultset.next()) {
-																stock = resultset.getInt("cantidad");
-																nombreProducto = resultset.getString("nombre");
+															rs = stmt.executeQuery("select * from producto where idProducto = " + seleccion);
+															while(rs.next()) {
+																stock = rs.getInt("cantidad");
+																nombreProducto = rs.getString("nombre");
 															}
 																if(stock > 0) {
 																	//MODIFICAMOS LA CANTIDAD DE PRODUCTOS
@@ -313,6 +313,8 @@ public class TestMain {
 											break;
 										case 3:	//3)Autorizar compra
 											Boolean compraRealizada = false;
+											int posicionProducto = 0;
+											
 											// Consulta SQL
 											sql = "SELECT * from Ticket";
 											rs = stmt.executeQuery(sql);
@@ -323,28 +325,33 @@ public class TestMain {
 													// Recibir por tipo de columna
 													int idUser = rs.getInt("Cliente_idUsuario");
 													if(idUser == id_usuario) {
-														int idProducto = rs.getInt("Producto_idProducto");
-														
-														//CARGANDO EN TABLA(ProductoComprado) DONDE SE REALIZAN LAS COMPRAS
-														mySql = "insert into ProductoComprado (Cliente_idCliente, Usuario_idUsuario, Producto_idProducto)values(?,?,?)";
-														ps = conn.prepareStatement(mySql); 
-
-														ps.setInt(1, id_cliente);
-														ps.setInt(2, id_usuario);
-														ps.setInt(3, idProducto);
-														ps.execute();
-
+														listaProductos[posicionProducto] = rs.getInt("Producto_idProducto");
+														posicionProducto++;
 														compraRealizada = true;
 													}
 
 												}
 												if(compraRealizada) {
 													
+													for(int i = 0; i < posicionProducto; i++) {
+														//CARGANDO EN TABLA(ProductoComprado) DONDE SE REALIZAN LAS COMPRAS
+														mySql = "insert into ProductoComprado (Cliente_idCliente, Usuario_idUsuario, Producto_idProducto)values(?,?,?)";
+														ps = conn.prepareStatement(mySql); 
+
+														ps.setInt(1, id_cliente);
+														ps.setInt(2, id_usuario);
+														ps.setInt(3, listaProductos[i]);
+														ps.execute();
+
+													}
 													// ELIMINAR PRODUCTO DE LISTA SELECCIONADA (Tabla Ticket)
-													System.out.println("Su compra ha sido realizada.");
-													sql = "delete from Ticket where Cliente_idUsuario = " + id_usuario;
-													stmt.executeUpdate(sql);
-													System.out.println("Realizado");
+													try {
+														sql = "delete from Ticket where Cliente_idUsuario = " + id_usuario;
+														stmt.executeUpdate(sql);
+														System.out.println("Su compra ha sido realizada.");	
+													}catch (Exception e) {
+														System.out.println("No se pudo Realizar la compra");
+													}
 												}
 												else {
 													System.out.println("No ha seleccionado ningun producto."); // no tenia seleccionado productos en ticket
@@ -567,6 +574,7 @@ public class TestMain {
 
 			//PASO 6: Entorno de limpieza
 			rs.close();
+			ps.close();
 			stmt.close();
 			conn.close();
 		}
